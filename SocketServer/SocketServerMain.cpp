@@ -59,7 +59,7 @@ int main() {
 	while (true) {
 		//6.接收客户端消息
 		DataPackage recvData;
-		int recvLen = recv(clientSocket, (char*)&recvData, 128, 0);
+		int recvLen = recv(clientSocket, (char*)&recvData, sizeof(DataPackage), 0);
 		if (recvLen <= 0) {
 			cout << "客户端已退出!" << endl;
 			break;
@@ -88,6 +88,7 @@ int main() {
 				{
 					send(clientSocket, "用户名错误", 128, 0);
 				}
+	
 				break;
 			default:
 				send(clientSocket, "未知错误!", 128, 0);

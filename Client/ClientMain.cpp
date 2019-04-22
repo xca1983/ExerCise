@@ -56,12 +56,18 @@ int main() {
 		recvdata.msType = Login;
 		recvdata.dataLen = sizeof(DataPackage);
 		//4.向服务器发送消息
-		send(clientSocket, (const char*)&recvdata, 128, 0);//根据输入项服务器发送消息
-		//5.接收服务器信息
+		if (SOCKET_ERROR == send(clientSocket, (const char*)&recvdata, sizeof(DataPackage), 0)) {
+			cout << "向服务器发送消息失败" << endl;
+		}//根据输入项服务器发送消息
+		else
+		{
+			cout << "向服务器发送成功消息" << endl;
+		}
+		//5.接收服务器信息		
 		recvlen = recv(clientSocket, msbuff2, 128, 0);
 		cout << "服务器返回长度:" << recvlen << endl;
 		if (recvlen > 0) {
-			cout << "收到来自服务器的消息:" << msBuff << endl;
+			cout << "收到来自服务器的消息:" << msbuff2 << endl;
 		}
 		else
 		{
