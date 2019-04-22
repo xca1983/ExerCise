@@ -4,6 +4,18 @@
 #include<iostream>
 #include<WinSock2.h>
 using namespace std;
+enum MessageType
+{
+	Login,
+	Loginout
+};
+struct DataPackage
+{
+	short dataLen;
+	MessageType msType;
+	char _name[32];
+	char _password[32];
+};
 int main() {
 	//1.Winsock服务的初始化 WSAStartup
 	WORD ver = MAKEWORD(2, 2);
@@ -34,9 +46,6 @@ int main() {
 	sockaddr_in clientAddr = {};//远程客户端地址
 	int clientAddrLen = sizeof(sockaddr_in);
 	SOCKET clientSocket = INVALID_SOCKET;
-	char msBuff[] = "Hello I'm SocketServer";
-	char mbuff[] = "未知命令,请重新输入!";
-	char clientms[256] = {};
 	clientSocket = accept(sock, (sockaddr*)&clientAddr, &clientAddrLen);//参数1 listen函数用到的socket,参数2 远程客户端地址 参数3 远程客户端长度 返回远程客户端Socket
 	if (SOCKET_ERROR == clientSocket) {
 		std::cout << "服务端接收客户端链接失败 ,无效的客户端Socket!" << endl;
@@ -44,26 +53,46 @@ int main() {
 	else {
 		std::cout << "服务端接收客户端链接成功成功!" << endl;
 		std::cout << "新客户端加入成功,IP地址为:!" << inet_ntoa(clientAddr.sin_addr) << endl;
+		send(clientSocket, "I'm server", 128, 0);
 	}
 
 	while (true) {
 		//6.接收客户端消息
-		int recvLen = recv(clientSocket, clientms, 256, 0);
+		DataPackage recvData;
+		int recvLen = recv(clientSocket, (char*)&recvData, 128, 0);
 		if (recvLen <= 0) {
 			cout << "客户端已退出!" << endl;
 			break;
 		}
 		else
 		{
-			cout << "收到客户端消息:" << clientms << endl;
-		}
-		if (strcmp(clientms, "Hello")) {
-			send(clientSocket, mbuff, strlen(msBuff) + 1, 0);
-		}
-		else
-		{
-			//7.服务端发送数据
-			send(clientSocket, msBuff, strlen(msBuff) + 1, 0);
+			cout << "收到的数据长度:" << recvData.dataLen << endl;
+			cout << "收到的消息类型:" << recvData.msType << endl;
+			cout << "收到的用户名:" << recvData._name << endl;
+			cout << "收到的密码:" << recvData._password << endl;
+			switch (recvData.msType)
+			{
+			case Login:
+				if (strcmp(recvData._name, "张三") == 0) {
+					if (strcmp(recvData._password, "123456") == 0) {
+						//send(clientSocket, "登录成功!", 128, 0);
+						send(clientSocket, "登录成功!", 128, 0);
+						cout << "发送登录成功消息!" << endl;
+					}
+					else
+					{
+						send(clientSocket, "密码错误!", 128, 0);
+					}
+				}
+				else
+				{
+					send(clientSocket, "用户名错误", 128, 0);
+				}
+				break;
+			default:
+				send(clientSocket, "未知错误!", 128, 0);
+				break;
+			}
 		}
 	}
 

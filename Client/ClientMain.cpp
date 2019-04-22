@@ -4,6 +4,19 @@
 #include<WinSock2.h>
 #include<iostream>
 using namespace std;
+enum MessageType
+{
+	Login,
+	Loginout
+};
+struct DataPackage
+{
+	short dataLen;
+	MessageType msType;
+	char _name[32];
+	char _password[32];
+};
+
 int main() {
 	//1.Winsock服务的初始化 WSAStartup
 	WORD version = MAKEWORD(2, 2);
@@ -30,14 +43,22 @@ int main() {
 		cout << "连接服务器成功!" << endl;
 	}
 
-	char msBuff[256] = {};
+	char msBuff[128] = {};
+	char msbuff2[128];
+	int recvlen = recv(clientSocket, msBuff, 128, 0);
+	cout << "服务器消息:" << msBuff << endl;
+	DataPackage recvdata;
 	while (true) {
-		char sendBuff[256] = {};
-		cin >> sendBuff;
+		cout << "请输入用户名:" << endl;
+		cin >> recvdata._name;
+		cout << "请输入密码:" << endl;
+		cin >> recvdata._password;
+		recvdata.msType = Login;
+		recvdata.dataLen = sizeof(DataPackage);
 		//4.向服务器发送消息
-		send(clientSocket, sendBuff, 256, 0);//根据输入项服务器发送消息
+		send(clientSocket, (const char*)&recvdata, 128, 0);//根据输入项服务器发送消息
 		//5.接收服务器信息
-		int recvlen = recv(clientSocket, msBuff, 256, 0);
+		recvlen = recv(clientSocket, msbuff2, 128, 0);
 		cout << "服务器返回长度:" << recvlen << endl;
 		if (recvlen > 0) {
 			cout << "收到来自服务器的消息:" << msBuff << endl;
