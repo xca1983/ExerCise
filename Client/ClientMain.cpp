@@ -29,7 +29,7 @@ int main() {
 	}
 	else
 	{
-		cout << "客户端创建Socket成功!" << endl;
+		cout << "客户端创建Socket成功! 服务端Socket:" << clientSocket<< endl;
 	}
 	//3.连接服务器服务器
 	sockaddr_in serverAddr = {};
@@ -41,39 +41,54 @@ int main() {
 	}
 	else {
 		cout << "连接服务器成功!" << endl;
+
 	}
 
-	char msBuff[128] = {};
+	//char msBuff[128] = {};
 	char msbuff2[128];
-	int recvlen = recv(clientSocket, msBuff, 128, 0);
-	cout << "服务器消息:" << msBuff << endl;
-	DataPackage recvdata;
+	//int recvlen = recv(clientSocket, msBuff, 128, 0);
+	//cout << "服务器消息:" << msBuff << endl;
+	DataPackage recvdata = {sizeof(DataPackage),Login,"张三","123456"};
 	while (true) {
-		cout << "请输入用户名:" << endl;
-		cin >> recvdata._name;
-		cout << "请输入密码:" << endl;
-		cin >> recvdata._password;
-		recvdata.msType = Login;
-		recvdata.dataLen = sizeof(DataPackage);
-		//4.向服务器发送消息
-		if (SOCKET_ERROR == send(clientSocket, (const char*)&recvdata, sizeof(DataPackage), 0)) {
-			cout << "向服务器发送消息失败" << endl;
-		}//根据输入项服务器发送消息
-		else
-		{
-			cout << "向服务器发送成功消息" << endl;
-		}
-		//5.接收服务器信息		
-		recvlen = recv(clientSocket, msbuff2, 128, 0);
-		cout << "服务器返回长度:" << recvlen << endl;
-		if (recvlen > 0) {
-			cout << "收到来自服务器的消息:" << msbuff2 << endl;
-		}
-		else
-		{
-			cout << "服务器响应失败" << endl;
-		}
 
+		fd_set readfds; FD_ZERO(&readfds);
+		timeval times = { 1,0 };
+		FD_SET(clientSocket, &readfds);
+		int ret=select(clientSocket + 1, &readfds, 0, 0, &times);
+		if (ret < 0)
+		{
+			cout << "与服务器断开连接" << endl;
+			break;
+		}
+		if (FD_ISSET(clientSocket, &readfds))
+		{
+			//5.接收服务器信息		
+			int recvlen = recv(clientSocket, msbuff2, 128, 0);
+			cout << "服务器返回长度:" << recvlen << endl;
+			if (recvlen > 0)
+			{
+				cout << "收到来自服务器的消息:" << msbuff2 << endl;
+			}
+			else
+			{
+				cout << "服务器响应失败" << endl;
+			}
+		}
+		cout << "请输入用户名:" << endl;
+		//cin >> recvdata._name;
+		//cout << "请输入密码:" << endl;
+		//cin >> recvdata._password;
+
+		//4.向服务器发送消息
+		//if (SOCKET_ERROR == send(clientSocket, (const char*)&recvdata, sizeof(DataPackage), 0)) {
+		//	cout << "向服务器发送消息失败" << endl;
+		//}//根据输入项服务器发送消息
+		//else
+		//{
+		//	cout << "向服务器发送成功消息" << endl;
+		//}
+
+		
 	}
 	//6.关闭Socket
 	closesocket(clientSocket);
