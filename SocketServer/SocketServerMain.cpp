@@ -3,7 +3,6 @@
 #include<Windows.h>
 #include<iostream>
 #include<WinSock2.h>
-#include "SocketServerMain.h"
 using namespace std;
 enum MessageType
 {
@@ -163,14 +162,14 @@ int main() {
 				}
 				else{	//6.接收某个客户端消息
 					
-					//if (RecvMessage(socks[i]) == -1)
-					//{
-					//	/*for (int i = 0; i < totalSock; ++i)
-					//	{
+					if (RecvMessage(socks[i]) == -1)
+					{
+						/*for (int i = 0; i < totalSock; ++i)
+						{
 
-					//	}*/
-					//	break;
-					//}
+						}*/
+						break;
+					}
 				}
 			}
 		}	
