@@ -1,4 +1,4 @@
-#define _WINSOCK_DEPRECATED_NO_WARNINGS
+ï»¿#define _WINSOCK_DEPRECATED_NO_WARNINGS
 #define WIN32_LEAN_AND_MEAN
 #ifdef _WIN32
 #include<Windows.h>
@@ -13,207 +13,24 @@
 #endif // _WIN32
 #include<iostream>
 #include<thread>
+#include<vector>
+#include"Server.hpp"
 //using namespace std;
 using std::cout;
 using std::endl;
-enum MessageType
-{
-	Login,
-	Loginout
-};
-struct DataPackage
-{
-	short dataLen;
-	MessageType msType;
-	char _name[32];
-	char _password[32];
-};
-int RecvMessage(SOCKET sock)
-{
-	DataPackage recvData;
-	int recvLen = recv(sock, (char*)&recvData, sizeof(DataPackage), 0);
-	if (recvLen <= 0)
-	{
-		cout << "¿Í»§¶ËÒÑÍË³ö!" << endl;
-		return -1;
-	}
-	else
-	{
-		cout << "ÊÕµ½¿Í»§¶Ë" << sock << "·¢À´µÄÊý¾Ý" << endl;
-		cout << "ÊÕµ½¿Í»§¶Ë·¢µÄÊý¾Ý³¤¶È:" << recvData.dataLen << endl;
-		cout << "ÊÕµ½µÄÏûÏ¢ÀàÐÍ:" << recvData.msType << endl;
-		cout << "ÊÕµ½µÄÓÃ»§Ãû:" << recvData._name << endl;
-		cout << "ÊÕµ½µÄÃÜÂë:" << recvData._password << endl;
-		switch (recvData.msType)
-		{
-		case Login:
-			if (strcmp(recvData._name, "ÕÅÈý") == 0)
-			{
-				if (strcmp(recvData._password, "123456") == 0)
-				{
-					//send(clientSocket, "µÇÂ¼³É¹¦!", 128, 0);
-					send(sock, "µÇÂ¼³É¹¦!", 128, 0);
-					cout << "Ïò¿Í»§¶Ë" << sock << "·¢ËÍµÇÂ¼³É¹¦ÏûÏ¢!" << endl;
-				}
-				else
-				{
-					send(sock, "ÃÜÂë´íÎó!", 128, 0);
-					cout << "Ïò¿Í»§¶Ë" << sock << "·¢ËÍÃÜÂë´íÎóÏûÏ¢!" << endl;
-				}
-			}
-			else
-			{
-				send(sock, "ÓÃ»§Ãû´íÎó", 128, 0);
-
-				cout << "Ïò¿Í»§¶Ë" << sock << "·¢ËÍÓÃ»§Ãû´íÎóÏûÏ¢!" << endl;
-			}
-
-			break;
-		default:
-			send(sock, "Î´Öª´íÎó!", 128, 0);
-
-			cout << "Ïò¿Í»§¶Ë" << sock << "·¢ËÍÎ´Öª´íÎó!ÏûÏ¢!" << endl;
-			break;
-		}
-	}
-}
 
 int main()
 {
-#ifdef _WIN32
-	//1.Winsock·þÎñµÄ³õÊ¼»¯ WSAStartup
-	WORD version = MAKEWORD(2, 2);
-	WSADATA data;
-	WSAStartup(version, &data);
-#endif // _WIN32
-
-	//2.´´½¨Socket
-	SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);//´´½¨Socket ²ÎÊý1 socket
-	if (SOCKET_ERROR == sock)
+	Server* s = new Server;
+	s->InitServerSocket();
+	s->BindServerPort("127.0.0.1", 4567);
+	s->ListenPort();
+	s->AcceptClient();
+	while (s->IsRun())
 	{
-		cout << "Creat Socket failed!" << endl;
+		s->OnRun();
 	}
-	else
-	{
-		cout << "Creat Socket success!:" << sock << endl;
-	}
-	//3.°ó¶¨ÓÃÓÚ½ÓÊÕ¿Í»§¶ËÁ¬½ÓµÄÍøÂç¶Ë¿Ú
-	sockaddr_in _sin = {};//Ö¸¶¨µØÖ·
-	_sin.sin_family = AF_INET;//µØÖ·²ÉÓÃµÄÐ­Òé
-	_sin.sin_port = htons(4567);//µØÖ·¶Ë¿Ú
-#ifdef _WIN32
-	_sin.sin_addr.S_un.S_addr = INADDR_ANY;//µØÖ·
-#else
-	_sin.sin_addr.s_addr = INADDR_ANY; //inet_addr("129.204.40.157");
-#endif // _WIN32
-	if (SOCKET_ERROR == bind(sock, (sockaddr*)&_sin, sizeof(sockaddr_in)))
-	{//°ó¶¨¶Ë¿Ú
-		cout << "bind failed!" << endl;
-	}
-	else
-	{
-		cout << "bind success!" << endl;
-	}
-	//4.¼àÌýÍøÂç¶Ë¿Ú
-	if (SOCKET_ERROR == listen(sock, 5))
-	{
-		std::cout << "listen failed!" << endl;
-	}
-	else
-	{
-		std::cout << "listen success!" << endl;
-	}
-
-
-	timeval times = { 1,0 };
-	SOCKET socks[4];
-	socks[0] = sock;		//½«¼àÌýSocket´æÈëÊý×é(·þÎñ¶ËSocket)
-	int totalSock = 1;
-
-
-	while (true)
-	{
-		//cout << "Socket×ÜÊý:" << totalSock << endl;
-		fd_set readfds; FD_ZERO(&readfds);//¿É¶Á¼¯ºÏ
-		fd_set writefds; FD_ZERO(&writefds);//¿ÉÐ´¼¯ºÏ
-		fd_set exceptfds; FD_ZERO(&exceptfds);//ÀýÍâ¼¯ºÏ
-
-		for (int i = 0; i < totalSock; ++i)
-		{
-			FD_SET(socks[i], &readfds);//½«¼àÌýSocket¼ÓÈë¿É¶Á¼¯ºÏ (·þÎñ¶ËSocket)
-			FD_SET(socks[i], &writefds);//½«¼àÌýSocket¼ÓÈë¿ÉÐ´¼¯ºÏ(·þÎñ¶ËSocket)
-			FD_SET(socks[i], &exceptfds);//½«¼àÌýSocket¼ÓÈëÒì³£¼¯ºÏ(·þÎñ¶ËSocket)
-		}
-		int ret = select(sock + 1, &readfds, &writefds, &exceptfds, &times);
-		if (ret < 0)
-		{
-			cout << "select failed " << endl;
-
-			break;
-		}
-
-		int m_totalSock = totalSock;
-		for (int i = 0; i < m_totalSock; ++i)//±éÀúsocksÊý×é¼¯ºÏ 
-		{
-			if (FD_ISSET(socks[i], &readfds))// Èç¹û¸ÃsockÔÚ¿É¶Á¼¯ºÏÀïÃæ          
-			{
-				if (socks[i] == sock)//Èç¹û·þÎñ¶ËsockÔÚ¶Á¼¯ºÏÀïÃæ ÓÐÐÂ¿Í»§¶ËÁ¬½Óµ½´ï
-				{
-					sockaddr_in clientAddr = {};//Ô¶³Ì¿Í»§¶ËµØÖ·
-					int clientAddrLen = sizeof(sockaddr_in);
-					SOCKET clientSocket = INVALID_SOCKET;
-#ifdef _WIN32
-					clientSocket = accept(sock, (sockaddr*)&clientAddr, &clientAddrLen);//²ÎÊý1 listenº¯ÊýÓÃµ½µÄsocket,²ÎÊý2 Ô¶³Ì¿Í»§¶ËµØÖ· ²ÎÊý3 Ô¶³Ì¿Í»§¶Ë³¤¶È ·µ»ØÔ¶³Ì¿Í»§¶ËSocket
-#else
-					clientSocket = accept(sock, (sockaddr*)&clientAddr, (socklen_t*)& clientAddrLen);//²ÎÊý1 listenº¯ÊýÓÃµ½µÄsocket,²ÎÊý2 Ô¶³Ì¿Í»§¶ËµØÖ· ²ÎÊý3 Ô¶³Ì¿Í»§¶Ë³¤¶È ·µ»ØÔ¶³Ì¿Í»§¶ËSocket
-#endif // _WIN32
-
-					if (SOCKET_ERROR == clientSocket)
-					{
-						std::cout << "·þÎñ¶Ë½ÓÊÕ¿Í»§¶ËÁ´½ÓÊ§°Ü ,ÎÞÐ§µÄ¿Í»§¶ËSocket!" << endl;
-						break;
-					}
-					else
-					{
-						std::cout << "·þÎñ¶Ë½ÓÊÕ¿Í»§¶ËÁ´½Ó³É¹¦³É¹¦!Socket" << clientSocket << endl;
-						std::cout << "ÐÂ¿Í»§¶Ë¼ÓÈë³É¹¦,IPµØÖ·Îª:!" << inet_ntoa(clientAddr.sin_addr) << endl;
-						/*	char msbuff[128];
-						recv(clientSocket, msbuff, 128, 0);
-						cout << "ÊÕµ½¿Í»§¶ËÏûÏ¢" << msbuff << endl;*/
-						//send(clientSocket, "I'm server!", 128, 0);
-						for (int i = 1; i < totalSock; i++)
-						{
-							send(socks[i], "ÐÂÓÃ»§¼ÓÈë", 128, 0);
-						}
-						socks[totalSock++] = clientSocket;
-						cout << "×ÜSocketÊý:" << totalSock << endl;
-					}
-				}
-				else
-				{	//6.½ÓÊÕÄ³¸ö¿Í»§¶ËÏûÏ¢
-
-					if (RecvMessage(socks[i]) == -1)
-					{
-						/*for (int i = 0; i < totalSock; ++i)
-						{
-
-						}*/
-						break;
-					}
-				}
-			}
-		}
-	}
-
-	//8.¹Ø±ÕSocket
-	//closesocket(clientSocket);
-#ifdef _WIN32
-	//closesocket(clientSocket);
-	WSACleanup();
-#else
-	close(sock);
-#endif // _WIN32
-
+	s->CloseServerSocket();
 
 	cout << "Hello Socket!" << endl;
 	system("pause");

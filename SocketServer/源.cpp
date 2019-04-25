@@ -1,4 +1,4 @@
-#define _WINSOCK_DEPRECATED_NO_WARNINGS
+ï»¿#define _WINSOCK_DEPRECATED_NO_WARNINGS
 #define WIN32_LEAN_AND_MEAN
 #include<Windows.h>
 #include<iostream>
@@ -31,9 +31,9 @@ int main00()
 			cout << "listen error,error code " << WSAGetLastError() << endl;
 			break;
 		}
-		//ÒÔÏÂÊÇselectÏà¹Ø´úÂë
-		//´Ë´¦°ÑlistensocketÉèÖÃÎª·Ç×èÈûÄ£Ê½
-		u_long unblock = 1;    //·Ç0Îª·Ç×èÈûÄ£Ê½
+		//ä»¥ä¸‹æ˜¯selectç›¸å…³ä»£ç 
+		//æ­¤å¤„æŠŠlistensocketè®¾ç½®ä¸ºéžé˜»å¡žæ¨¡å¼
+		u_long unblock = 1;    //éž0ä¸ºéžé˜»å¡žæ¨¡å¼
 		if (ioctlsocket(listensocket, FIONBIO, &unblock) == SOCKET_ERROR)
 		{
 			cout << "ioctlsocket(listensocket) error,error code " << WSAGetLastError() << endl;
@@ -60,7 +60,7 @@ int main00()
 			}
 			if (res == 0)
 			{
-				continue;//±íÊ¾µ±Ç°ÎÞ×´Ì¬¿É¿ØµÄsocket
+				continue;//è¡¨ç¤ºå½“å‰æ— çŠ¶æ€å¯æŽ§çš„socket
 			}
 			int tempTotalSockets = TotalSockets;
 			for (int i = 0; i<TotalSockets; i++)
@@ -69,14 +69,14 @@ int main00()
 				{
 					if (socks[i] == listensocket)
 					{
-						//listensocket¿É¶Á£¬±íÊ¾Á¬½Óµ½´ï
+						//listensocketå¯è¯»ï¼Œè¡¨ç¤ºè¿žæŽ¥åˆ°è¾¾
 						SOCKET acp = accept(listensocket, NULL, NULL);
 						if (acp == INVALID_SOCKET)
 						{
 							cout << "accept error,error code " << WSAGetLastError() << endl;
 							break;
 						}
-						//ÉèÖÃÐÂµ½´ïsocketÎª·Ç×èÈûÄ£Ê½£¬²¢¼ÓÈësocksÒÔ¼°fdset
+						//è®¾ç½®æ–°åˆ°è¾¾socketä¸ºéžé˜»å¡žæ¨¡å¼ï¼Œå¹¶åŠ å…¥socksä»¥åŠfdset
 						if (ioctlsocket(acp, FIONBIO, &unblock) == SOCKET_ERROR)
 						{
 							cout << "ioctlsocket(acp) error,error code " << WSAGetLastError() << endl;
